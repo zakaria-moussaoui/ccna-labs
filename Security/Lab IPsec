@@ -1,0 +1,80 @@
+# Lab IPsec - VPN Site-to-Site
+
+
+## Objectif
+Configurer un tunnel VPN IPsec site-to-site entre R1 et R3
+à travers le routeur R2 (simulant Internet).
+
+## Configuration R1
+
+### Étape 1 - ISAKMP Policy (Phase 1)
+crypto isakmp policy 10
+ encr aes
+ hash sha
+ authentication pre-share
+ group 2
+
+crypto isakmp key cisco123 address 10.1.2.1
+
+### Étape 2 - IPsec Transform Set (Phase 2)
+crypto ipsec transform-set TSET esp-aes esp-sha-hmac
+ mode tunnel
+
+### Étape 3 - ACL trafic intéressant
+access-list 100 permit ip 192.168.1.0 0.0.0.255 192.168.2.0 0.0.0.255
+access-list 100 permit ip 192.168.1.0 0.0.0.255 172.16.2.0 0.0.0.255
+access-list 100 permit ip 172.16.1.0 0.0.0.255 192.168.2.0 0.0.0.255
+access-list 100 permit ip 172.16.1.0 0.0.0.255 172.16.2.0 0.0.0.255
+
+### Étape 4 - Crypto Map
+crypto map CMAP 10 ipsec-isakmp
+ set peer 10.1.2.1
+ set transform-set TSET
+ match address 100
+
+### Étape 5 - Appliquer sur interface
+interface Se0/0/0
+ crypto map CMAP
+
+## Configuration R3
+
+### Étape 1 - ISAKMP Policy (Phase 1)
+crypto isakmp policy 10
+ encr aes
+ hash sha
+ authentication pre-share
+ group 2
+
+crypto isakmp key cisco123 address 10.1.1.1
+
+### Étape 2 - IPsec Transform Set (Phase 2)
+crypto ipsec transform-set TSET esp-aes esp-sha-hmac
+ mode tunnel
+
+### Étape 3 - ACL trafic intéressant
+access-list 100 permit ip 192.168.2.0 0.0.0.255 192.168.1.0 0.0.0.255
+access-list 100 permit ip 192.168.2.0 0.0.0.255 172.16.1.0 0.0.0.255
+access-list 100 permit ip 172.16.2.0 0.0.0.255 192.168.1.0 0.0.0.255
+access-list 100 permit ip 172.16.2.0 0.0.0.255 172.16.1.0 0.0.0.255
+
+### Étape 4 - Crypto Map
+crypto map CMAP 10 ipsec-isakmp
+ set peer 10.1.1.1
+ set transform-set TSET
+ match address 100
+
+### Étape 5 - Appliquer sur interface
+interface Se0/0/1
+ crypto map CMAP
+
+## Configuration R2 (ISP - pas de crypto)
+ip route 192.168.1.0 255.255.255.0 10.1.1.1
+ip route 172.16.1.0 255.255.255.0 10.1.1.1
+ip route 192.168.2.0 255.255.255.0 10.1.2.1
+ip route 172.16.2.0 255.255.255.0 10.1.2.1
+
+## Vérification
+show crypto isakmp sa
+show crypto ipsec sa
+ping 192.168.2.1 source 192.168.1.1
+ping 172.16.2.1 source 172.16.1.1
