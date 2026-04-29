@@ -2,9 +2,6 @@
 
 ## About
 CCNA practice labs by **Zakaria Moussaoui**  
-- Preparing for **CCNA 200-301 exam — October 2026**  
-- MSSP Engineer at **BSECURE**  
-- Engineering Student at **ISGA Casablanca**
 
 ---
 
